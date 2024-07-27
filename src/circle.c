@@ -47,7 +47,7 @@ int main() {
     SDL_RenderClear(ren);
     srand(time(NULL));
     int t = clock();
-    int n = 10;
+    int n = 100;
     double x[n];
     double y[n];
     double xs[n];
@@ -55,12 +55,17 @@ int main() {
     for (int i = 0; i < n; i++) {
         x[i] = 400;
         y[i] = 400;
-        xs[i] = (rand() % 100 - 50) / 10000.;
-        ys[i] = (rand() % 100 - 50) / 10000.;
+        xs[i] = (rand() % 100 - 50) / 1000.;
+        ys[i] = (rand() % 100 - 50) / 1000.;
     }
+    int r = rand() % 256;
+    int g = rand() % 256;
+    int b = rand() % 256;
+    int w = 799;
+    int h = 833;
     while (!quit) {
-        SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
-        SDL_RenderClear(ren);
+        // SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+        // SDL_RenderClear(ren);
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 quit = 1;
@@ -70,18 +75,20 @@ int main() {
                 y[0] = e.button.y;
             }
         }
-        int r = clock() / 256 % 256;
-        int g = clock() / 256 / 256 % 256;
-        int b = clock() / 256 / 256 / 256 % 256;
+        if (rand() % 100 == 0) {
+            r += rand() % 2;
+            g += rand() % 2;
+            b += rand() % 2;
+        }
         SDL_SetRenderDrawColor(ren, r % 256, g % 256, b % 256, 255);
         for (int i = 0; i < n; i++) {
-            draw_circle_lines(ren, x[i], y[i], 10, 10);
+            draw_circle_lines(ren, x[i], y[i], 5, 8);
             x[i] += xs[i];
             y[i] += ys[i];
-            if (x[i] < 0 || x[i] > 799) {
+            if (x[i] < 0 || x[i] > w) {
                 xs[i] = -xs[i];
             }
-            if (y[i] < 0 || y[i] > 833) {
+            if (y[i] < 0 || y[i] > h) {
                 ys[i] = -ys[i];
             }
         }
