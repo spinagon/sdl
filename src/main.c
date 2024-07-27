@@ -15,9 +15,6 @@ int main() {
         return 1;
     }
     SDL_Renderer *ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    SDL_Surface *bmp = SDL_LoadBMP("/home/dennisli/Downloads/hello.bmp");
-    SDL_Texture *tex = SDL_CreateTextureFromSurface(ren, bmp);
-    SDL_FreeSurface(bmp);
     SDL_Event e;
     int quit = 0;
     int i = 0;
@@ -67,7 +64,6 @@ int main() {
             t = clock();
         }
     }
-    SDL_DestroyTexture(tex);
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     SDL_Quit();
