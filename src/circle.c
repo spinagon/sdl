@@ -47,54 +47,51 @@ int main() {
     SDL_RenderClear(ren);
     srand(time(NULL));
     int t = clock();
-    int n = 100;
-    double x[n];
-    double y[n];
-    double xs[n];
-    double ys[n];
-    for (int i = 0; i < n; i++) {
-        x[i] = 400;
-        y[i] = 400;
-        xs[i] = (rand() % 100 - 50) / 1000.;
-        ys[i] = (rand() % 100 - 50) / 1000.;
-    }
-    int r = rand() % 256;
-    int g = rand() % 256;
-    int b = rand() % 256;
-    int w = 799;
-    int h = 833;
+    int n = 0;
+    double x[1000];
+    double y[1000];
+    double xs[1000];
+    double ys[1000];
+    int count = 0;
     while (!quit) {
-        // SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
-        // SDL_RenderClear(ren);
+        count++;
+        SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+        SDL_RenderClear(ren);
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 quit = 1;
             }
             if (e.type == SDL_MOUSEBUTTONDOWN) {
-                x[0] = e.button.x;
-                y[0] = e.button.y;
+                x[n] = e.button.x;
+                y[n] = e.button.y;
+                n++;
             }
         }
-        if (rand() % 100 == 0) {
-            r += rand() % 2;
-            g += rand() % 2;
-            b += rand() % 2;
+        SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+        for (int i = 0; i < n; i++) {
+            xs[i] = 0;
+            ys[i] = 0;
+            for (int j = 0; j < n; j++) {
+                if (i == j) continue;
+                double dx = x[i] - x[j];
+                double dy = y[i] - y[j];
+                double angle = atan2(dy, dx);
+                double mag = 1. / hypot(dx, dy);
+                xs[i] -= mag * cos(angle) * 1;
+                ys[i] -= mag * sin(angle) * 1;
+                xs[i] += mag * mag * cos(angle) * 100;
+                ys[i] += mag * mag * sin(angle) * 100;
+            }
         }
-        SDL_SetRenderDrawColor(ren, r % 256, g % 256, b % 256, 255);
         for (int i = 0; i < n; i++) {
             draw_circle_lines(ren, x[i], y[i], 5, 8);
             x[i] += xs[i];
             y[i] += ys[i];
-            if (x[i] < 0 || x[i] > w) {
-                xs[i] = -xs[i];
-            }
-            if (y[i] < 0 || y[i] > h) {
-                ys[i] = -ys[i];
-            }
         }
         if (clock() - t > 10000) {
             SDL_RenderPresent(ren);
             t = clock();
+            count = 0;
         }
     }
     SDL_DestroyRenderer(ren);
