@@ -58,8 +58,8 @@ int main(int argc, char* argv[]) {
                 break;
             }
         }
-        j = j * 255 / n
-            int r = (j % 64) * 4;
+        j = j * 255 / n;
+        int r = (j % 64) * 4;
         int g = j;
         int b = (j % 32) * 8;
         SDL_SetRenderDrawColor(ren, r % 255, g % 255, b % 255, 255);
