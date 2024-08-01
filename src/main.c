@@ -1,11 +1,14 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_events.h>
-#include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <complex.h>
 
-int main() {
+#include "SDL.h"
+#include "SDL_events.h"
+
+#define CMPLX(x, y) ((double complex)((double)(x) + I * (double)(y)))
+
+int main(int argc, char* argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         printf("SDL_Init Error: %s\n", SDL_GetError());
     }
@@ -25,6 +28,7 @@ int main() {
     double x0 = 0;
     double y0 = 0;
     double scale = 1;
+    int n = 64;
     while (!quit) {
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
@@ -48,18 +52,19 @@ int main() {
         double cy = ((y / 400. - 1) * scale) + y0;
         double complex z = 0;
         int j = 0;
-        for (j = 0; j < 256; j++) {
+        for (j = 0; j < n; j++) {
             z = z * z + CMPLX(cx, cy);
             if (cabs(z) > 4) {
                 break;
             }
         }
-        int r = (j % 64) * 4;
+        j = j * 255 / n
+            int r = (j % 64) * 4;
         int g = j;
         int b = (j % 32) * 8;
         SDL_SetRenderDrawColor(ren, r % 255, g % 255, b % 255, 255);
         SDL_RenderDrawPointF(ren, x, y);
-        if (clock() - t > 10000) {
+        if (clock() - t > 10) {
             SDL_RenderPresent(ren);
             t = clock();
         }
