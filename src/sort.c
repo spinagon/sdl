@@ -9,6 +9,45 @@
 
 SDL_Color hsv2rgb(double h, double s, double v);
 
+void use_texture(SDL_Renderer* ren) {
+    SDL_Texture* tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 800, 600);
+    unsigned char* pixels;
+    int pitch;
+    SDL_LockTexture(tex, NULL, (void**)&pixels, &pitch);
+    for (int i = 0; i < 100000; i++) {
+        int x = rand() % (800 * 4);
+        int y = rand() % 600;
+        int offset = y * pitch + x;
+        pixels[offset] = rand();
+    }
+    SDL_UnlockTexture(tex);
+    SDL_RenderCopy(ren, tex, NULL, NULL);
+    SDL_DestroyTexture(tex);
+}
+
+void use_surface(SDL_Renderer* ren) {
+    SDL_Surface* surf = SDL_CreateRGBSurfaceWithFormat(0, 800, 600, 32, SDL_PIXELFORMAT_RGBA32);
+    for (int i = 0; i < 100000; i++) {
+        int x = rand() % (800 * 4);
+        int y = rand() % 600;
+        int offset = y * surf->pitch + x;
+        ((unsigned char*)surf->pixels)[offset] = 255;
+    }
+    SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+    SDL_RenderCopy(ren, tex, NULL, NULL);
+    SDL_DestroyTexture(tex);
+    SDL_FreeSurface(surf);
+}
+
+void use_draw(SDL_Renderer* ren) {
+    for (int i = 0; i < 100000; i++) {
+        int x = rand() % 800;
+        int y = rand() % 600;
+        SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);
+        SDL_RenderDrawPoint(ren, x, y);
+    }
+}
+
 int main(int argc, char* argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window *win = SDL_CreateWindow("", 100, 100, 800, 600, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
@@ -18,32 +57,25 @@ int main(int argc, char* argv[]) {
     srand(time(NULL));
     SDL_Event e;
     int quit = 0;
-    SDL_Texture* tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 800, 600);
     int steps = 0;
     int t_fps = clock();
+    int mode = 0;
     while (!quit) {
         steps++;
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 quit = 1;
             }
+            if (e.type == SDL_MOUSEBUTTONDOWN) {
+                mode = !mode;
+            }
         }
         SDL_Rect r = {100, 100, 200, 200};
-        unsigned char* pixels;
-        int pitch;
-        // SDL_LockTexture(tex, NULL, (void**)&pixels, &pitch);
-        for (int i = 0; i < 1000000; i++) {
-        //     int x = rand() % (800 * 4);
-        //     int y = rand() % 600;
-        //     int offset = y * pitch + x;
-        //     pixels[offset] = 255;
-            int x = rand() % 800;
-            int y = rand() % 600;
-            SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);
-            SDL_RenderDrawPoint(ren, x, y);
+        if (mode == 0) {
+            use_texture(ren);
+        } else {
+            use_surface(ren);
         }
-        // SDL_UnlockTexture(tex);
-        // SDL_RenderCopy(ren, tex, NULL, NULL);
         SDL_RenderPresent(ren);
         SDL_Delay(1);
         if (clock() - t_fps > 1000) {
@@ -55,7 +87,6 @@ int main(int argc, char* argv[]) {
             steps = 0;
         }
     }
-    SDL_DestroyTexture(tex);
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     SDL_Quit();
