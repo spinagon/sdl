@@ -9,6 +9,15 @@
 
 SDL_Color hsv2rgb(double h, double s, double v);
 
+void quick_sort(int* a, int start, int end);
+int partition(int* a, int start, int end, int (*cmp)(int, int));
+int cmp(int a, int b);
+void swap(int* a, int* b);
+void update_image();
+
+void selection_sort(int* a, int n);
+void insertion_sort(int* a, int n);
+
 void use_texture(SDL_Renderer* ren) {
     SDL_Texture* tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 800, 600);
     unsigned char* pixels;
@@ -48,6 +57,13 @@ void use_draw(SDL_Renderer* ren) {
     }
 }
 
+struct global_data {
+    SDL_Renderer* ren;
+    int* data;
+    int h;
+    int w;
+} global_data;
+
 int main(int argc, char* argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window *win = SDL_CreateWindow("", 100, 100, 800, 600, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
@@ -60,31 +76,24 @@ int main(int argc, char* argv[]) {
     int steps = 0;
     int t_fps = clock();
     int mode = 0;
+    int h = 300;
+    int w = 400;
+    int* data = malloc(h * w * sizeof(int));
+    global_data.ren = ren;
+    global_data.data = data;
+    global_data.h = h;
+    global_data.w = w;
+    for (int i = 0; i < h * w; i++) {
+        data[i] = rand() % 256;
+    }
+    //quick_sort(data, 0, h * w - 1);
+    //selection_sort(data, h * w);
+    insertion_sort(data, h * w);
     while (!quit) {
-        steps++;
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 quit = 1;
             }
-            if (e.type == SDL_MOUSEBUTTONDOWN) {
-                mode = !mode;
-            }
-        }
-        SDL_Rect r = {100, 100, 200, 200};
-        if (mode == 0) {
-            use_texture(ren);
-        } else {
-            use_surface(ren);
-        }
-        SDL_RenderPresent(ren);
-        SDL_Delay(1);
-        if (clock() - t_fps > 1000) {
-            double fps = steps * 1000. / (clock() - t_fps);
-            char s[100];
-            sprintf(s, "%.1lf", fps);
-            SDL_SetWindowTitle(win, s);
-            t_fps = clock();
-            steps = 0;
         }
     }
     SDL_DestroyRenderer(ren);
@@ -152,4 +161,97 @@ SDL_Color hsv2rgb(double h, double s, double v) {
         break;
     }
     return out;
+}
+
+void selection_sort(int* a, int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (a[i] > a[j]) {
+                swap(&a[i], &a[j]);
+            }
+        }
+    }
+}
+
+void insertion_sort(int* a, int n) {
+    for (int i = 1; i < n; i++) {
+        for (int j = i; j > 0; j--) {
+            if (a[j] > a[j - 1]) {
+                swap(&a[j], &a[j - 1]);
+            } else {
+                break;
+            }
+        }
+    }
+}
+
+void quick_sort(int* a, int start, int end) {
+    if (start >= end) {
+        return;
+    }
+    int i_pivot = partition(a, start, end, &cmp);
+    quick_sort(a, start, i_pivot);
+    quick_sort(a, i_pivot + 1, end);
+}
+
+int partition(int* a, int start, int end, int (*cmp)(int, int)) {
+    int pivot = a[start + (end - start) / 2];
+    int i_pivot;
+    int i = start - 1;
+    int j = end + 1;
+    while (1) {
+        do {
+            i++;
+        } while (cmp(a[i], pivot) < 0);
+        do {
+            j--;
+        } while (cmp(a[j], pivot) > 0);
+        if (i >= j) {
+            i_pivot = j;
+            break;
+        }
+        swap(&a[i], &a[j]);
+    }
+    return i_pivot;
+}
+
+int cmp(int a, int b) {
+    return a - b;
+}
+
+int cmp2(const void* a, const void* b) {
+    return *(int*)a - *(int*)b;
+}
+
+void swap(int* a, int* b) {
+    static int steps = 0;
+    int t = *a;
+    *a = *b;
+    *b = t;
+    if (steps > 100000) {
+        update_image();
+        SDL_RenderPresent(global_data.ren);
+        SDL_Delay(1);
+        steps = 0;
+    }
+    steps++;
+}
+
+void update_image() {
+    SDL_Renderer* ren = global_data.ren;
+    int* data = global_data.data;
+    int h = global_data.h;
+    int w = global_data.w;
+    SDL_Rect r = {0, 0, w, h};
+    int* pixels = malloc(h * w * sizeof(int));
+    SDL_Surface* surf = SDL_CreateRGBSurfaceWithFormatFrom((void*)pixels, w, h, 32, w * sizeof(int), SDL_PIXELFORMAT_RGBA32);
+    for (int i = 0; i < w * h; i++) {
+        SDL_Color c = hsv2rgb(data[i] / 255. * 360, 0.8, 0.8);
+        pixels[i] = SDL_MapRGBA(surf->format, c.r, c.g, c.b, c.a);
+    }
+    SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+    SDL_FreeSurface(surf);
+    free(pixels);
+    SDL_RenderCopy(ren, tex, NULL, &r);
+    SDL_DestroyTexture(tex);
 }

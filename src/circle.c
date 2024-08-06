@@ -33,33 +33,33 @@ SDL_Color hsv2rgb(double h, double s, double v) {
     tt = (int)round((t * 255));
 
     switch(i) {
-    case 0:
+        case 0:
         out.r = vv;
         out.g = tt;
         out.b = pp;
         break;
-    case 1:
+        case 1:
         out.r = qq;
         out.g = vv;
         out.b = pp;
         break;
-    case 2:
+        case 2:
         out.r = pp;
         out.g = vv;
         out.b = tt;
         break;
-    case 3:
+        case 3:
         out.r = pp;
         out.g = qq;
         out.b = vv;
         break;
-    case 4:
+        case 4:
         out.r = tt;
         out.g = pp;
         out.b = vv;
         break;
-    case 5:
-    default:
+        case 5:
+        default:
         out.r = vv;
         out.g = pp;
         out.b = qq;
@@ -131,6 +131,9 @@ int main(int argc, char* argv[]) {
     int t = clock();
     int t_fps = clock();
     int steps = 0;
+    double attr_strength = 0;
+    double attr_x = 0;
+    double attr_y = 0;
     while (!quit) {
         steps++;
         SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
@@ -140,11 +143,24 @@ int main(int argc, char* argv[]) {
                 quit = 1;
             }
             if (e.type == SDL_MOUSEBUTTONDOWN) {
-                x[n] = e.button.x;
-                y[n] = e.button.y;
-                xs[n] = 0.0;
-                ys[n] = 0.0;
-                n++;
+                if (e.button.button == 1) {
+                    x[n] = e.button.x;
+                    y[n] = e.button.y;
+                    xs[n] = 0.0;
+                    ys[n] = 0.0;
+                    n++;
+                } else {
+                    attr_strength = 1;
+                    attr_x = e.button.x;
+                    attr_y = e.button.y;
+                }
+            }
+            if (e.type == SDL_MOUSEBUTTONUP) {
+                attr_strength = 0;
+            }
+            if (e.type == SDL_MOUSEMOTION) {
+                attr_x = e.motion.x;
+                attr_y = e.motion.y;
             }
         }
         SDL_SetRenderDrawColor(ren, r % 256, g % 256, b % 256, 255);
@@ -152,13 +168,23 @@ int main(int argc, char* argv[]) {
             for (int j = 0; j < n; j++) {
                 double dx = x[i] - x[j];
                 double dy = y[i] - y[j];
-                if (fabs(dx) < 1 && fabs(dy) < 1) continue;
-                double angle = atan2(dy, dx);
-                double mag = 1 / hypot(dx, dy);
-                xs[i] -= pow(mag, 2) * cos(angle) * 1e1;
-                ys[i] -= pow(mag, 2) * sin(angle) * 1e1;
-                xs[i] += pow(mag * 10, 5) * cos(angle) * 1e1;
-                ys[i] += pow(mag * 10, 5) * sin(angle) * 1e1;
+                if (fabs(dx) > 1 || fabs(dy) > 1) {
+                    double angle = atan2(dy, dx);
+                    double mag = 1 / hypot(dx, dy);
+                    xs[i] -= pow(mag, 2) * cos(angle) * 1e1;
+                    ys[i] -= pow(mag, 2) * sin(angle) * 1e1;
+                    xs[i] += pow(mag * 10, 5) * cos(angle) * 1e1;
+                    ys[i] += pow(mag * 10, 5) * sin(angle) * 1e1;
+                }
+
+                dx = x[i] - attr_x;
+                dy = y[i] - attr_y;
+                if (fabs(dx) > 10 || fabs(dy) > 10){
+                    double angle = atan2(dy, dx);
+                    double mag = 1 / hypot(dy, dx);
+                    xs[i] -= mag * attr_strength * cos(angle) * 1e-1;
+                    ys[i] -= mag * attr_strength * sin(angle) * 1e-1;
+                }
             }
         }
         for (int i = 0; i < n; i++) {
