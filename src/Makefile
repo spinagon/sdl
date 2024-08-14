@@ -7,7 +7,7 @@ LDFLAGS += -L$(SDL2_DIR)/i686-w64-mingw32/lib -lmingw32 -lSDL2_test -lSDL2main -
 
 BUILD_DIR = ../build
 
-all: main.exe circle.exe sort.exe
+all: main.exe circle.exe sort.exe graph.exe
 
 %.exe: %.o
 	gcc $(CFLAGS) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS)

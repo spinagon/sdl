@@ -13,10 +13,12 @@ void quick_sort(int* a, int start, int end);
 int partition(int* a, int start, int end, int (*cmp)(int, int));
 int cmp(int a, int b);
 void swap(int* a, int* b);
+void swap_n(int* a, int n, int i, int j);
 void update_image();
+double sortedness(int* a, int n);
 
-void selection_sort(int* a, int n);
-void insertion_sort(int* a, int n);
+void selection_sort(int* a, int n, int (*cmp)(int, int));
+void insertion_sort(int* a, int n, int (*cmp)(int, int));
 
 void use_texture(SDL_Renderer* ren) {
     SDL_Texture* tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 800, 600);
@@ -86,9 +88,9 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < h * w; i++) {
         data[i] = rand() % 256;
     }
-    //quick_sort(data, 0, h * w - 1);
-    //selection_sort(data, h * w);
-    insertion_sort(data, h * w);
+    // quick_sort(data, 0, h * w - 1);
+    selection_sort(data, h * w, cmp);
+    // insertion_sort(data, h * w, cmp);
     while (!quit) {
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
@@ -163,20 +165,20 @@ SDL_Color hsv2rgb(double h, double s, double v) {
     return out;
 }
 
-void selection_sort(int* a, int n) {
+void selection_sort(int* a, int n, int (*cmp)(int, int)) {
     for (int i = 0; i < n; i++) {
         for (int j = i + 1; j < n; j++) {
-            if (a[i] > a[j]) {
+            if (!cmp(a[i], a[j])) {
                 swap(&a[i], &a[j]);
             }
         }
     }
 }
 
-void insertion_sort(int* a, int n) {
+void insertion_sort(int* a, int n, int (*cmp)(int, int)) {
     for (int i = 1; i < n; i++) {
         for (int j = i; j > 0; j--) {
-            if (a[j] > a[j - 1]) {
+            if (!cmp(a[j], a[j - 1])) {
                 swap(&a[j], &a[j - 1]);
             } else {
                 break;
@@ -216,6 +218,19 @@ int partition(int* a, int start, int end, int (*cmp)(int, int)) {
 }
 
 int cmp(int a, int b) {
+    static int steps = 0;
+    static double next_sortedness = 0;
+    if (steps > 100000) {
+        double s = sortedness(global_data.data, global_data.h * global_data.w);
+        if (s >= next_sortedness) {
+            next_sortedness = s + 0.01;
+            update_image();
+            SDL_RenderPresent(global_data.ren);
+            SDL_Delay(1);
+        }
+        steps = 0;
+    }
+    steps++;
     return a - b;
 }
 
@@ -223,18 +238,21 @@ int cmp2(const void* a, const void* b) {
     return *(int*)a - *(int*)b;
 }
 
+double sortedness(int* a, int n) {
+    long ordered_pairs = 0;
+    for (long i = 0; i < n - 1; i++) {
+        if (a[i] <= a[i + 1]) {
+            ordered_pairs += 1;
+        }
+    }
+    double ret = ordered_pairs / (double)(n - 1);
+    return ret;
+}
+
 void swap(int* a, int* b) {
-    static int steps = 0;
     int t = *a;
     *a = *b;
     *b = t;
-    if (steps > 100000) {
-        update_image();
-        SDL_RenderPresent(global_data.ren);
-        SDL_Delay(1);
-        steps = 0;
-    }
-    steps++;
 }
 
 void update_image() {
